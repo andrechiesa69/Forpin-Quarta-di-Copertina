@@ -2,12 +2,12 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- A-Frame e MindAR -->
+    <!-- Librerie A-Frame e MindAR -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
   </head>
   <body>
-    <!-- Configurazione Scena con Raycaster per intercettare i click -->
+    <!-- Scena WebAR con abilitazione dei click/tap tramite Raycaster -->
     <a-scene 
       mindar-image="imageTargetSrc: ./targets.mind;" 
       color-space="sRGB" 
@@ -19,7 +19,7 @@
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <!-- TARGET 0: Facebook (es. prima immagine inserita nel compiler) -->
+      <!-- TARGET 0: Facebook -->
       <a-entity mindar-image-target="targetIndex: 0">
         <a-plane 
           id="btn-facebook" 
@@ -73,22 +73,26 @@
 
     </a-scene>
 
-    <!-- Script per la riorientazione agli URL -->
+    <!-- Script per la gestione dei click e apertura dei profili social -->
     <script>
+      // Facebook
       document.querySelector('#btn-facebook').addEventListener('click', () => {
-        window.location.href = 'https://www.facebook.com/TUA_PAGINA';
+        window.location.href = 'https://www.facebook.com/forpinpiacenza/?locale=it_IT';
       });
 
+      // LinkedIn
       document.querySelector('#btn-linkedin').addEventListener('click', () => {
-        window.location.href = 'https://www.linkedin.com/in/TUO_PROFILO';
+        window.location.href = 'https://it.linkedin.com/company/forpin-scarl';
       });
 
+      // Instagram
       document.querySelector('#btn-instagram').addEventListener('click', () => {
-        window.location.href = 'https://www.instagram.com/TUO_PROFILO';
+        window.location.href = 'https://www.instagram.com/forpinpiacenza/';
       });
 
+      // YouTube
       document.querySelector('#btn-youtube').addEventListener('click', () => {
-        window.location.href = 'https://www.youtube.com/@TUO_CANALE';
+        window.location.href = 'https://www.youtube.com/@ForPInScarl';
       });
     </script>
   </body>
