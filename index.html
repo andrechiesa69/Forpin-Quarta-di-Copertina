@@ -16,44 +16,42 @@
       -webkit-user-select: none;
     }
 
-    /* Contenitore dei loghi fissati in basso al centro dello schermo */
+    /* Contenitore dei loghi fisso sullo schermo */
     #social-overlay {
       position: fixed;
-      bottom: 80px;
+      bottom: 75px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 99999;
+      z-index: 999999 !important;
       display: flex;
-      gap: 15px;
+      gap: 6px; /* Molto vicini tra loro */
       align-items: center;
       justify-content: center;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
+      display: none; /* Inizialmente nascosti */
+      pointer-events: auto;
     }
 
-    /* Visibile dopo il primo aggancio */
-    #social-overlay.active {
-      opacity: 1;
-      visibility: visible;
+    /* Quando attivato, resta SEMPRE visibile indipendentemente dalla fotocamera */
+    #social-overlay.is-visible {
+      display: flex !important;
     }
 
-    /* Stile delle icone social */
+    /* Stile icone compatte e ravvicinate */
     .social-btn {
-      width: 50px;
-      height: 50px;
-      border-radius: 12px;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
       object-fit: contain;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 6px;
-      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 5px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
-      transition: transform 0.1s ease;
+      display: block;
     }
 
     .social-btn:active {
-      transform: scale(0.9);
+      transform: scale(0.92);
     }
 
     /* Box messaggi in basso */
@@ -62,13 +60,13 @@
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 99999;
+      z-index: 999999 !important;
       background: rgba(0, 0, 0, 0.85);
       color: #ffffff;
       padding: 10px 20px;
       border-radius: 20px;
       font-family: Arial, sans-serif;
-      font-size: 14px;
+      font-size: 13px;
       pointer-events: none;
       text-align: center;
       box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
@@ -83,11 +81,12 @@
         const uiText = document.getElementById('ui-container');
         let activated = false;
 
-        // Quando il foglio viene riconosciuto la prima volta
+        // Quando inquadri il foglio la prima volta
         sceneEl.addEventListener('targetFound', () => {
           if (!activated) {
             activated = true;
-            socialOverlay.classList.add('active');
+            // Mostra i loghi e mantienili visibili per sempre
+            socialOverlay.classList.add('is-visible');
             if (uiText) uiText.innerText = "Tocca un logo per aprire la pagina!";
           }
         });
@@ -97,26 +96,26 @@
 </head>
 <body>
 
-  <!-- Box messaggio -->
+  <!-- Box messaggio informativo -->
   <div id="ui-container">Inquadra l'immagine per attivare i loghi</div>
 
-  <!-- I 4 Loghi HUD Fissi che ti seguono ovunque sullo schermo -->
+  <!-- I 4 Loghi fissi vicini tra loro -->
   <div id="social-overlay">
-    <a href="https://www.facebook.com/forpinpiacenza/" target="_blank">
+    <a href="https://www.facebook.com/forpinpiacenza/" target="_blank" rel="noopener">
       <img src="./fb.png" class="social-btn" alt="Facebook">
     </a>
-    <a href="https://www.linkedin.com/company/forpin-scarl/" target="_blank">
+    <a href="https://www.linkedin.com/company/forpin-scarl/" target="_blank" rel="noopener">
       <img src="./in.png" class="social-btn" alt="LinkedIn">
     </a>
-    <a href="https://www.instagram.com/forpinpiacenza/" target="_blank">
+    <a href="https://www.instagram.com/forpinpiacenza/" target="_blank" rel="noopener">
       <img src="./ig.png" class="social-btn" alt="Instagram">
     </a>
-    <a href="https://www.youtube.com/@ForPInScarl" target="_blank">
+    <a href="https://www.youtube.com/@ForPInScarl" target="_blank" rel="noopener">
       <img src="./yt.png" class="social-btn" alt="YouTube">
     </a>
   </div>
 
-  <!-- Scena MindAR -->
+  <!-- Scena WebAR -->
   <a-scene 
     ar-controller
     mindar-image="imageTargetSrc: ./targets.mind;" 
