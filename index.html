@@ -17,18 +17,20 @@
     }
     #ui-container {
       position: fixed;
-      bottom: 20px;
+      bottom: 25px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 9999;
       background: rgba(0, 0, 0, 0.85);
       color: #ffffff;
-      padding: 10px 20px;
-      border-radius: 20px;
+      padding: 12px 24px;
+      border-radius: 25px;
       font-family: Arial, sans-serif;
-      font-size: 14px;
+      font-size: 15px;
+      font-weight: bold;
       pointer-events: none;
       text-align: center;
+      box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
     }
   </style>
 
@@ -36,8 +38,18 @@
     AFRAME.registerComponent('social-click-handler', {
       init: function () {
         const sceneEl = this.el;
+        const uiText = document.getElementById('ui-container');
 
-        // Gestore per i tocchi sui loghi
+        // Quando il mirino sparisce e il target viene trovato
+        sceneEl.addEventListener('targetFound', () => {
+          if (uiText) uiText.innerText = "Tocca un logo per aprire la pagina!";
+        });
+
+        sceneEl.addEventListener('targetLost', () => {
+          if (uiText) uiText.innerText = "Inquadra l'immagine per attivare i loghi";
+        });
+
+        // Gestore per intercettare i tocchi diretti sui loghi (Raycaster 2D/3D)
         const handleTouch = (e) => {
           const touch = e.touches ? e.touches[0] : e;
           if (!touch) return;
@@ -76,12 +88,11 @@
 </head>
 <body>
 
-  <div id="ui-container">Inquadra il logo per aprire i social</div>
+  <div id="ui-container">Inquadra l'immagine per attivare i loghi</div>
 
-  <!-- Scene configurata con alta tolleranza per non far sparire subito i loghi -->
   <a-scene 
     social-click-handler
-    mindar-image="imageTargetSrc: ./targets.mind; missTolerance: 80; filterMinCF:0.0001; filterBeta: 0.001;" 
+    mindar-image="imageTargetSrc: ./targets.mind; missTolerance: 50;" 
     color-space="sRGB" 
     renderer="colorManagement: true, physicallyCorrectLights" 
     vr-mode-ui="enabled: false" 
@@ -96,52 +107,57 @@
 
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Target Unico MindAR -->
+    <!-- Target MindAR unico -->
     <a-entity mindar-image-target="targetIndex: 0">
       
-      <!-- 1. FACEBOOK -->
-      <a-plane 
-        class="clickable" 
-        data-url="https://www.facebook.com/forpinpiacenza/" 
-        src="#fb-img"
-        position="-0.45 0 0.1" 
-        width="0.25" 
-        height="0.25" 
-        material="transparent: true; alphaTest: 0.1">
-      </a-plane>
+      <!-- Contenitore loghi leggermente sollevato (Z: 0.2) e ingrandito per facilitare la visibilità e il click -->
+      <a-entity position="0 0 0.2" scale="1.5 1.5 1.5">
 
-      <!-- 2. LINKEDIN -->
-      <a-plane 
-        class="clickable" 
-        data-url="https://www.linkedin.com/company/forpin-scarl/" 
-        src="#in-img"
-        position="-0.15 0 0.1" 
-        width="0.25" 
-        height="0.25" 
-        material="transparent: true; alphaTest: 0.1">
-      </a-plane>
+        <!-- 1. FACEBOOK -->
+        <a-plane 
+          class="clickable" 
+          data-url="https://www.facebook.com/forpinpiacenza/" 
+          src="#fb-img"
+          position="-0.45 0 0" 
+          width="0.25" 
+          height="0.25" 
+          material="transparent: true; alphaTest: 0.1">
+        </a-plane>
 
-      <!-- 3. INSTAGRAM -->
-      <a-plane 
-        class="clickable" 
-        data-url="https://www.instagram.com/forpinpiacenza/" 
-        src="#ig-img"
-        position="0.15 0 0.1" 
-        width="0.25" 
-        height="0.25" 
-        material="transparent: true; alphaTest: 0.1">
-      </a-plane>
+        <!-- 2. LINKEDIN -->
+        <a-plane 
+          class="clickable" 
+          data-url="https://www.linkedin.com/company/forpin-scarl/" 
+          src="#in-img"
+          position="-0.15 0 0" 
+          width="0.25" 
+          height="0.25" 
+          material="transparent: true; alphaTest: 0.1">
+        </a-plane>
 
-      <!-- 4. YOUTUBE -->
-      <a-plane 
-        class="clickable" 
-        data-url="https://www.youtube.com/@ForPInScarl" 
-        src="#yt-img"
-        position="0.45 0 0.1" 
-        width="0.25" 
-        height="0.25" 
-        material="transparent: true; alphaTest: 0.1">
-      </a-plane>
+        <!-- 3. INSTAGRAM -->
+        <a-plane 
+          class="clickable" 
+          data-url="https://www.instagram.com/forpinpiacenza/" 
+          src="#ig-img"
+          position="0.15 0 0" 
+          width="0.25" 
+          height="0.25" 
+          material="transparent: true; alphaTest: 0.1">
+        </a-plane>
+
+        <!-- 4. YOUTUBE -->
+        <a-plane 
+          class="clickable" 
+          data-url="https://www.youtube.com/@ForPInScarl" 
+          src="#yt-img"
+          position="0.45 0 0" 
+          width="0.25" 
+          height="0.25" 
+          material="transparent: true; alphaTest: 0.1">
+        </a-plane>
+
+      </a-entity>
 
     </a-entity>
   </a-scene>
