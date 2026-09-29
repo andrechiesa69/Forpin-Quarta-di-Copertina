@@ -32,20 +32,22 @@
   </style>
 
   <script>
-    // Componente per il click compatibile sia con Mobile (Touch) che Desktop (Click)
+    // Componente ottimizzato per l'apertura dei link su Mobile/Safari
     AFRAME.registerComponent('social-link', {
       schema: { url: { type: 'string', default: '' } },
       init: function () {
         const url = this.data.url;
         
-        const openUrl = () => {
+        const handleInteraction = (evt) => {
+          evt.stopPropagation();
           if (url) {
-            window.location.href = url; // Apre direttamente il link senza blocco pop-up
+            window.location.href = url;
           }
         };
 
-        this.el.addEventListener('click', openUrl);
-        this.el.addEventListener('touchstart', openUrl);
+        // Rilevamento completo per touch screen e mouse
+        this.el.addEventListener('click', handleInteraction);
+        this.el.addEventListener('mousedown', handleInteraction);
       }
     });
   </script>
@@ -70,7 +72,7 @@
       <img id="yt-img" src="./yt.png">
     </a-assets>
 
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-camera position="0 0 0" look-controls="enabled: false" raycaster="objects: .clickable"></a-camera>
 
     <a-entity mindar-image-target="targetIndex: 0">
       
@@ -82,7 +84,7 @@
         position="-0.45 0 0.1" 
         width="0.22" 
         height="0.22" 
-        material="transparent: true; alphaTest: 0.5">
+        material="transparent: true; alphaTest: 0.2; blending: additive">
       </a-plane>
 
       <!-- 2. LINKEDIN -->
@@ -93,7 +95,7 @@
         position="-0.15 0 0.1" 
         width="0.22" 
         height="0.22" 
-        material="transparent: true; alphaTest: 0.5">
+        material="transparent: true; alphaTest: 0.2; blending: additive">
       </a-plane>
 
       <!-- 3. INSTAGRAM -->
@@ -104,7 +106,7 @@
         position="0.15 0 0.1" 
         width="0.22" 
         height="0.22" 
-        material="transparent: true; alphaTest: 0.5">
+        material="transparent: true; alphaTest: 0.2; blending: additive">
       </a-plane>
 
       <!-- 4. YOUTUBE -->
@@ -115,7 +117,7 @@
         position="0.45 0 0.1" 
         width="0.22" 
         height="0.22" 
-        material="transparent: true; alphaTest: 0.5">
+        material="transparent: true; alphaTest: 0.2; blending: additive">
       </a-plane>
 
     </a-entity>
