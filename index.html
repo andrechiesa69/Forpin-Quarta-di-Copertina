@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR Social Links - Forpin Piacenza</title>
+  <title>AR Loghi Interattivi - Forpin Piacenza</title>
   
   <!-- Librerie A-Frame e MindAR -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
@@ -20,19 +20,20 @@
       left: 50%;
       transform: translateX(-50%);
       z-index: 9999;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(0, 0, 0, 0.8);
       color: #ffffff;
-      padding: 10px 20px;
-      border-radius: 20px;
+      padding: 12px 24px;
+      border-radius: 25px;
       font-family: Arial, sans-serif;
       font-size: 14px;
       pointer-events: none;
       text-align: center;
+      box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
     }
   </style>
 
   <script>
-    // Componente custom per la gestione del click sui target AR
+    // Componente per la gestione del click sui loghi AR
     AFRAME.registerComponent('social-link', {
       schema: {
         url: { type: 'string', default: '' }
@@ -50,7 +51,7 @@
 </head>
 <body>
 
-  <div id="ui-container">Inquadra i loghi e tocca un'icona per aprire il link</div>
+  <div id="ui-container">Inquadra i loghi e toccali per aprire le pagine social</div>
 
   <a-scene 
     mindar-image="imageTargetSrc: ./targets.mind;" 
@@ -61,49 +62,61 @@
     cursor="rayOrigin: mouse"
     raycaster="objects: .clickable">
 
+    <!-- Caricamento delle icone dei loghi come Asset -->
+    <a-assets>
+      <img id="fb-img" src="https://cdn-icons-png.flaticon.com/512/124/124010.png" crossorigin="anonymous">
+      <img id="in-img" src="https://cdn-icons-png.flaticon.com/512/3536/3536505.png" crossorigin="anonymous">
+      <img id="ig-img" src="https://cdn-icons-png.flaticon.com/512/174/174855.png" crossorigin="anonymous">
+      <img id="yt-img" src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" crossorigin="anonymous">
+    </a-assets>
+
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Target Unico (File targets.mind compilato dall'immagine con sfondo bianco) -->
+    <!-- Target Unico dal file targets.mind -->
     <a-entity mindar-image-target="targetIndex: 0">
       
-      <!-- 1. FACEBOOK -->
+      <!-- 1. LOGO FACEBOOK -->
       <a-plane 
         class="clickable" 
         social-link="url: https://www.facebook.com/forpinpiacenza/" 
-        position="-0.45 0 0.01" 
-        width="0.22" 
-        height="0.22" 
-        material="opacity: 0; transparent: true">
+        src="#fb-img"
+        position="-0.45 0 0.1" 
+        width="0.2" 
+        height="0.2" 
+        material="transparent: true; alphaTest: 0.5">
       </a-plane>
 
-      <!-- 2. LINKEDIN -->
+      <!-- 2. LOGO LINKEDIN -->
       <a-plane 
         class="clickable" 
         social-link="url: https://www.linkedin.com/company/forpin-scarl/" 
-        position="-0.15 0 0.01" 
-        width="0.22" 
-        height="0.22" 
-        material="opacity: 0; transparent: true">
+        src="#in-img"
+        position="-0.15 0 0.1" 
+        width="0.2" 
+        height="0.2" 
+        material="transparent: true; alphaTest: 0.5">
       </a-plane>
 
-      <!-- 3. INSTAGRAM -->
+      <!-- 3. LOGO INSTAGRAM -->
       <a-plane 
         class="clickable" 
         social-link="url: https://www.instagram.com/forpinpiacenza/" 
-        position="0.15 0 0.01" 
-        width="0.22" 
-        height="0.22" 
-        material="opacity: 0; transparent: true">
+        src="#ig-img"
+        position="0.15 0 0.1" 
+        width="0.2" 
+        height="0.2" 
+        material="transparent: true; alphaTest: 0.5">
       </a-plane>
 
-      <!-- 4. YOUTUBE -->
+      <!-- 4. LOGO YOUTUBE -->
       <a-plane 
         class="clickable" 
         social-link="url: https://www.youtube.com/@ForPInScarl" 
-        position="0.45 0 0.01" 
-        width="0.22" 
-        height="0.22" 
-        material="opacity: 0; transparent: true">
+        src="#yt-img"
+        position="0.45 0 0.1" 
+        width="0.2" 
+        height="0.2" 
+        material="transparent: true; alphaTest: 0.5">
       </a-plane>
 
     </a-entity>
