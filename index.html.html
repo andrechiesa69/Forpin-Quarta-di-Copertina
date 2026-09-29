@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- A-Frame e MindAR -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+  </head>
+  <body>
+    <!-- Configurazione Scena con Raycaster per intercettare i click -->
+    <a-scene 
+      mindar-image="imageTargetSrc: ./targets.mind;" 
+      color-space="sRGB" 
+      renderer="colorManagement: true, physicallyCorrectLights" 
+      vr-mode-ui="enabled: false" 
+      device-orientation-permission-ui="enabled: false"
+      cursor="rayOrigin: mouse"
+      raycaster="objects: .clickable">
+
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <!-- TARGET 0: Facebook (es. prima immagine inserita nel compiler) -->
+      <a-entity mindar-image-target="targetIndex: 0">
+        <a-plane 
+          id="btn-facebook" 
+          class="clickable" 
+          src="./logo_facebook.jpg" 
+          position="0 0 0" 
+          height="1" 
+          width="1" 
+          rotation="0 0 0">
+        </a-plane>
+      </a-entity>
+
+      <!-- TARGET 1: LinkedIn -->
+      <a-entity mindar-image-target="targetIndex: 1">
+        <a-plane 
+          id="btn-linkedin" 
+          class="clickable" 
+          src="./logo_linkedin.jpg" 
+          position="0 0 0" 
+          height="1" 
+          width="1" 
+          rotation="0 0 0">
+        </a-plane>
+      </a-entity>
+
+      <!-- TARGET 2: Instagram -->
+      <a-entity mindar-image-target="targetIndex: 2">
+        <a-plane 
+          id="btn-instagram" 
+          class="clickable" 
+          src="./logo_instagram.jpg" 
+          position="0 0 0" 
+          height="1" 
+          width="1" 
+          rotation="0 0 0">
+        </a-plane>
+      </a-entity>
+
+      <!-- TARGET 3: YouTube -->
+      <a-entity mindar-image-target="targetIndex: 3">
+        <a-plane 
+          id="btn-youtube" 
+          class="clickable" 
+          src="./logo_youtube.jpg" 
+          position="0 0 0" 
+          height="1" 
+          width="1" 
+          rotation="0 0 0">
+        </a-plane>
+      </a-entity>
+
+    </a-scene>
+
+    <!-- Script per la riorientazione agli URL -->
+    <script>
+      document.querySelector('#btn-facebook').addEventListener('click', () => {
+        window.location.href = 'https://www.facebook.com/TUA_PAGINA';
+      });
+
+      document.querySelector('#btn-linkedin').addEventListener('click', () => {
+        window.location.href = 'https://www.linkedin.com/in/TUO_PROFILO';
+      });
+
+      document.querySelector('#btn-instagram').addEventListener('click', () => {
+        window.location.href = 'https://www.instagram.com/TUO_PROFILO';
+      });
+
+      document.querySelector('#btn-youtube').addEventListener('click', () => {
+        window.location.href = 'https://www.youtube.com/@TUO_CANALE';
+      });
+    </script>
+  </body>
+</html>
