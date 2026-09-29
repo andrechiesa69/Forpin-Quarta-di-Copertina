@@ -36,21 +36,45 @@
     AFRAME.registerComponent('touch-handler', {
       init: function () {
         const sceneEl = this.el;
+        const targetEntity = document.querySelector('[mindar-image-target]');
+        const uiText = document.getElementById('ui-container');
+        let hideTimer = null;
+
+        // Quando il foglio viene inquadrato
+        targetEntity.addEventListener('targetFound', () => {
+          if (hideTimer) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+          }
+          targetEntity.setAttribute('visible', 'true');
+          if (uiText) uiText.innerText = "Tocca direttamente un logo per aprire la pagina";
+        });
+
+        // Quando perdi di vista il foglio
+        targetEntity.addEventListener('targetLost', () => {
+          // Mantiene i loghi visibili per 30 secondi senza cambiare il messaggio a schermo
+          targetEntity.setAttribute('visible', 'true');
+
+          hideTimer = setTimeout(() => {
+            targetEntity.setAttribute('visible', 'false');
+            if (uiText) uiText.innerText = "Inquadra l'immagine per attivare i loghi";
+          }, 30000);
+        });
 
         const handleTouch = (e) => {
-          // Previene blocchi da Safari
           const touch = e.touches ? e.touches[0] : e;
+          if (!touch) return;
+
           const mouse = new THREE.Vector2();
-          
-          // Coordinate normalizzate dello schermo
           mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
           mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
 
           const camera = sceneEl.camera;
+          if (!camera) return;
+
           const raycaster = new THREE.Raycaster();
           raycaster.setFromCamera(mouse, camera);
 
-          // Cerca intersezioni con gli elementi .clickable
           const clickables = Array.from(document.querySelectorAll('.clickable')).map(el => el.object3D);
           const intersects = raycaster.intersectObjects(clickables, true);
 
@@ -65,7 +89,6 @@
           }
         };
 
-        // Aggancio diretto degli eventi di input touch/click sull'intera finestra
         window.addEventListener('touchend', handleTouch, false);
         window.addEventListener('click', handleTouch, false);
       }
@@ -74,11 +97,11 @@
 </head>
 <body>
 
-  <div id="ui-container">Tocca direttamente un logo per aprire la pagina</div>
+  <div id="ui-container">Inquadra l'immagine per attivare i loghi</div>
 
   <a-scene 
     touch-handler
-    mindar-image="imageTargetSrc: ./targets.mind;" 
+    mindar-image="imageTargetSrc: ./targets.mind; missTolerance: 30;" 
     color-space="sRGB" 
     renderer="colorManagement: true, physicallyCorrectLights" 
     vr-mode-ui="enabled: false" 
