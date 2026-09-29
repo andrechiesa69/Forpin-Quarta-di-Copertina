@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AR Social Links - Forpin Piacenza</title>
   
+  <!-- Librerie A-Frame e MindAR -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
@@ -31,20 +32,27 @@
   </style>
 
   <script>
+    // Componente per il click compatibile sia con Mobile (Touch) che Desktop (Click)
     AFRAME.registerComponent('social-link', {
       schema: { url: { type: 'string', default: '' } },
       init: function () {
         const url = this.data.url;
-        this.el.addEventListener('click', () => {
-          if (url) window.open(url, '_blank');
-        });
+        
+        const openUrl = () => {
+          if (url) {
+            window.location.href = url; // Apre direttamente il link senza blocco pop-up
+          }
+        };
+
+        this.el.addEventListener('click', openUrl);
+        this.el.addEventListener('touchstart', openUrl);
       }
     });
   </script>
 </head>
 <body>
 
-  <div id="ui-container">Inquadra i loghi per vedere la Realtà Aumentata</div>
+  <div id="ui-container">Tocca un logo per aprire il profilo social</div>
 
   <a-scene 
     mindar-image="imageTargetSrc: ./targets.mind;" 
@@ -52,7 +60,7 @@
     renderer="colorManagement: true, physicallyCorrectLights" 
     vr-mode-ui="enabled: false" 
     device-orientation-permission-ui="enabled: false"
-    cursor="rayOrigin: mouse"
+    cursor="rayOrigin: mouse; fuse: false"
     raycaster="objects: .clickable">
 
     <a-assets>
@@ -72,9 +80,9 @@
         social-link="url: https://www.facebook.com/forpinpiacenza/" 
         src="#fb-img"
         position="-0.45 0 0.1" 
-        width="0.2" 
-        height="0.2" 
-        material="transparent: true">
+        width="0.22" 
+        height="0.22" 
+        material="transparent: true; alphaTest: 0.5">
       </a-plane>
 
       <!-- 2. LINKEDIN -->
@@ -83,9 +91,9 @@
         social-link="url: https://www.linkedin.com/company/forpin-scarl/" 
         src="#in-img"
         position="-0.15 0 0.1" 
-        width="0.2" 
-        height="0.2" 
-        material="transparent: true">
+        width="0.22" 
+        height="0.22" 
+        material="transparent: true; alphaTest: 0.5">
       </a-plane>
 
       <!-- 3. INSTAGRAM -->
@@ -94,9 +102,9 @@
         social-link="url: https://www.instagram.com/forpinpiacenza/" 
         src="#ig-img"
         position="0.15 0 0.1" 
-        width="0.2" 
-        height="0.2" 
-        material="transparent: true">
+        width="0.22" 
+        height="0.22" 
+        material="transparent: true; alphaTest: 0.5">
       </a-plane>
 
       <!-- 4. YOUTUBE -->
@@ -105,9 +113,9 @@
         social-link="url: https://www.youtube.com/@ForPInScarl" 
         src="#yt-img"
         position="0.45 0 0.1" 
-        width="0.2" 
-        height="0.2" 
-        material="transparent: true">
+        width="0.22" 
+        height="0.22" 
+        material="transparent: true; alphaTest: 0.5">
       </a-plane>
 
     </a-entity>
