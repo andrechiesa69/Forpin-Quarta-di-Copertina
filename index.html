@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AR Social Links - Forpin Piacenza</title>
   
-  <!-- Librerie A-Frame e MindAR -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
@@ -34,28 +33,41 @@
   </style>
 
   <script>
-    // Componente per gestire il tocco diretto sui loghi 3D in modo universale
-    AFRAME.registerComponent('social-link', {
-      schema: { url: { type: 'string', default: '' } },
+    AFRAME.registerComponent('touch-handler', {
       init: function () {
-        const url = this.data.url;
-        const el = this.el;
+        const sceneEl = this.el;
 
-        const openLink = (e) => {
-          if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-          if (url) {
-            window.location.href = url;
+        const handleTouch = (e) => {
+          // Previene blocchi da Safari
+          const touch = e.touches ? e.touches[0] : e;
+          const mouse = new THREE.Vector2();
+          
+          // Coordinate normalizzate dello schermo
+          mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+          mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+          const camera = sceneEl.camera;
+          const raycaster = new THREE.Raycaster();
+          raycaster.setFromCamera(mouse, camera);
+
+          // Cerca intersezioni con gli elementi .clickable
+          const clickables = Array.from(document.querySelectorAll('.clickable')).map(el => el.object3D);
+          const intersects = raycaster.intersectObjects(clickables, true);
+
+          if (intersects.length > 0) {
+            let hitEl = intersects[0].object.el;
+            while (hitEl && !hitEl.classList.contains('clickable')) {
+              hitEl = hitEl.parentElement;
+            }
+            if (hitEl && hitEl.dataset.url) {
+              window.location.href = hitEl.dataset.url;
+            }
           }
         };
 
-        // Ascolta il click nativo di A-Frame
-        el.addEventListener('click', openLink);
-        
-        // Ascolta l'evento touch mobile diretto sull'elemento 3D
-        el.addEventListener('touchend', openLink);
+        // Aggancio diretto degli eventi di input touch/click sull'intera finestra
+        window.addEventListener('touchend', handleTouch, false);
+        window.addEventListener('click', handleTouch, false);
       }
     });
   </script>
@@ -65,13 +77,12 @@
   <div id="ui-container">Tocca direttamente un logo per aprire la pagina</div>
 
   <a-scene 
+    touch-handler
     mindar-image="imageTargetSrc: ./targets.mind;" 
     color-space="sRGB" 
     renderer="colorManagement: true, physicallyCorrectLights" 
     vr-mode-ui="enabled: false" 
-    device-orientation-permission-ui="enabled: false"
-    cursor="rayOrigin: mouse; fuse: false"
-    raycaster="objects: .clickable; far: 1000; interval: 50">
+    device-orientation-permission-ui="enabled: false">
 
     <a-assets>
       <img id="fb-img" src="./fb.png">
@@ -80,15 +91,14 @@
       <img id="yt-img" src="./yt.png">
     </a-assets>
 
-    <!-- La camera rileva il tocco sullo schermo tramite raycaster -->
-    <a-camera position="0 0 0" look-controls="enabled: false" raycaster="objects: .clickable; far: 1000"></a-camera>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
     <a-entity mindar-image-target="targetIndex: 0">
       
-      <!-- 1. FACEBOOK (Piano ingrandito invisibile dietro al logo per facilitare il tocco) -->
+      <!-- 1. FACEBOOK -->
       <a-plane 
         class="clickable" 
-        social-link="url: https://www.facebook.com/forpinpiacenza/" 
+        data-url="https://www.facebook.com/forpinpiacenza/" 
         src="#fb-img"
         position="-0.45 0 0.1" 
         width="0.25" 
@@ -99,7 +109,7 @@
       <!-- 2. LINKEDIN -->
       <a-plane 
         class="clickable" 
-        social-link="url: https://www.linkedin.com/company/forpin-scarl/" 
+        data-url="https://www.linkedin.com/company/forpin-scarl/" 
         src="#in-img"
         position="-0.15 0 0.1" 
         width="0.25" 
@@ -110,7 +120,7 @@
       <!-- 3. INSTAGRAM -->
       <a-plane 
         class="clickable" 
-        social-link="url: https://www.instagram.com/forpinpiacenza/" 
+        data-url="https://www.instagram.com/forpinpiacenza/" 
         src="#ig-img"
         position="0.15 0 0.1" 
         width="0.25" 
@@ -121,7 +131,7 @@
       <!-- 4. YOUTUBE -->
       <a-plane 
         class="clickable" 
-        social-link="url: https://www.youtube.com/@ForPInScarl" 
+        data-url="https://www.youtube.com/@ForPInScarl" 
         src="#yt-img"
         position="0.45 0 0.1" 
         width="0.25" 
