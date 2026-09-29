@@ -15,19 +15,60 @@
       user-select: none;
       -webkit-user-select: none;
     }
-    #ui-container {
+
+    /* Contenitore dei loghi fissati in basso al centro dello schermo */
+    #social-overlay {
       position: fixed;
-      bottom: 25px;
+      bottom: 80px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 9999;
+      z-index: 99999;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    /* Visibile dopo il primo aggancio */
+    #social-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Stile delle icone social */
+    .social-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      object-fit: contain;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 6px;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.1s ease;
+    }
+
+    .social-btn:active {
+      transform: scale(0.9);
+    }
+
+    /* Box messaggi in basso */
+    #ui-container {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
       background: rgba(0, 0, 0, 0.85);
       color: #ffffff;
-      padding: 12px 24px;
-      border-radius: 25px;
+      padding: 10px 20px;
+      border-radius: 20px;
       font-family: Arial, sans-serif;
-      font-size: 15px;
-      font-weight: bold;
+      font-size: 14px;
       pointer-events: none;
       text-align: center;
       box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
@@ -35,131 +76,60 @@
   </style>
 
   <script>
-    AFRAME.registerComponent('social-click-handler', {
+    AFRAME.registerComponent('ar-controller', {
       init: function () {
         const sceneEl = this.el;
+        const socialOverlay = document.getElementById('social-overlay');
         const uiText = document.getElementById('ui-container');
+        let activated = false;
 
-        // Quando il mirino sparisce e il target viene trovato
+        // Quando il foglio viene riconosciuto la prima volta
         sceneEl.addEventListener('targetFound', () => {
-          if (uiText) uiText.innerText = "Tocca un logo per aprire la pagina!";
-        });
-
-        sceneEl.addEventListener('targetLost', () => {
-          if (uiText) uiText.innerText = "Inquadra l'immagine per attivare i loghi";
-        });
-
-        // Gestore per intercettare i tocchi diretti sui loghi (Raycaster 2D/3D)
-        const handleTouch = (e) => {
-          const touch = e.touches ? e.touches[0] : e;
-          if (!touch) return;
-
-          const mouse = new THREE.Vector2();
-          mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
-          mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
-
-          const camera = sceneEl.camera;
-          if (!camera) return;
-
-          const raycaster = new THREE.Raycaster();
-          raycaster.setFromCamera(mouse, camera);
-
-          const clickables = Array.from(document.querySelectorAll('.clickable'))
-                                  .map(el => el.object3D);
-
-          const intersects = raycaster.intersectObjects(clickables, true);
-
-          if (intersects.length > 0) {
-            let hitEl = intersects[0].object.el;
-            while (hitEl && !hitEl.classList.contains('clickable')) {
-              hitEl = hitEl.parentElement;
-            }
-            if (hitEl && hitEl.dataset.url) {
-              window.location.href = hitEl.dataset.url;
-            }
+          if (!activated) {
+            activated = true;
+            socialOverlay.classList.add('active');
+            if (uiText) uiText.innerText = "Tocca un logo per aprire la pagina!";
           }
-        };
-
-        window.addEventListener('touchend', handleTouch, false);
-        window.addEventListener('click', handleTouch, false);
+        });
       }
     });
   </script>
 </head>
 <body>
 
+  <!-- Box messaggio -->
   <div id="ui-container">Inquadra l'immagine per attivare i loghi</div>
 
+  <!-- I 4 Loghi HUD Fissi che ti seguono ovunque sullo schermo -->
+  <div id="social-overlay">
+    <a href="https://www.facebook.com/forpinpiacenza/" target="_blank">
+      <img src="./fb.png" class="social-btn" alt="Facebook">
+    </a>
+    <a href="https://www.linkedin.com/company/forpin-scarl/" target="_blank">
+      <img src="./in.png" class="social-btn" alt="LinkedIn">
+    </a>
+    <a href="https://www.instagram.com/forpinpiacenza/" target="_blank">
+      <img src="./ig.png" class="social-btn" alt="Instagram">
+    </a>
+    <a href="https://www.youtube.com/@ForPInScarl" target="_blank">
+      <img src="./yt.png" class="social-btn" alt="YouTube">
+    </a>
+  </div>
+
+  <!-- Scena MindAR -->
   <a-scene 
-    social-click-handler
-    mindar-image="imageTargetSrc: ./targets.mind; missTolerance: 50;" 
+    ar-controller
+    mindar-image="imageTargetSrc: ./targets.mind;" 
     color-space="sRGB" 
     renderer="colorManagement: true, physicallyCorrectLights" 
     vr-mode-ui="enabled: false" 
     device-orientation-permission-ui="enabled: false">
 
-    <a-assets>
-      <img id="fb-img" src="./fb.png">
-      <img id="in-img" src="./in.png">
-      <img id="ig-img" src="./ig.png">
-      <img id="yt-img" src="./yt.png">
-    </a-assets>
-
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Target MindAR unico -->
-    <a-entity mindar-image-target="targetIndex: 0">
-      
-      <!-- Contenitore loghi leggermente sollevato (Z: 0.2) e ingrandito per facilitare la visibilità e il click -->
-      <a-entity position="0 0 0.2" scale="1.5 1.5 1.5">
+    <!-- Target Unico -->
+    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
 
-        <!-- 1. FACEBOOK -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.facebook.com/forpinpiacenza/" 
-          src="#fb-img"
-          position="-0.45 0 0" 
-          width="0.25" 
-          height="0.25" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
-
-        <!-- 2. LINKEDIN -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.linkedin.com/company/forpin-scarl/" 
-          src="#in-img"
-          position="-0.15 0 0" 
-          width="0.25" 
-          height="0.25" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
-
-        <!-- 3. INSTAGRAM -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.instagram.com/forpinpiacenza/" 
-          src="#ig-img"
-          position="0.15 0 0" 
-          width="0.25" 
-          height="0.25" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
-
-        <!-- 4. YOUTUBE -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.youtube.com/@ForPInScarl" 
-          src="#yt-img"
-          position="0.45 0 0" 
-          width="0.25" 
-          height="0.25" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
-
-      </a-entity>
-
-    </a-entity>
   </a-scene>
 
 </body>
