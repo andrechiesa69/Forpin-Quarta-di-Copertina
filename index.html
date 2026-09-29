@@ -21,7 +21,7 @@
       left: 50%;
       transform: translateX(-50%);
       z-index: 9999;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.85);
       color: #ffffff;
       padding: 10px 20px;
       border-radius: 20px;
@@ -33,40 +33,72 @@
   </style>
 
   <script>
-    AFRAME.registerComponent('sticky-socials', {
+    AFRAME.registerComponent('follow-camera', {
       init: function () {
-        const sceneEl = this.el;
-        const mainCamera = document.getElementById('main-camera');
-        const targetContainer = document.getElementById('target-container');
-        const socialGroup = document.getElementById('social-group');
-        let isAttachedToCamera = false;
+        this.isLocked = false;
+        const targetEl = document.querySelector('[mindar-image-target]');
+        const uiText = document.getElementById('ui-container');
 
-        // Quando il target viene inquadrato, aggancia i loghi alla fotocamera per farli seguire
-        sceneEl.addEventListener('targetFound', () => {
-          if (!isAttachedToCamera) {
-            // Sposta i loghi come figli della fotocamera
-            mainCamera.appendChild(socialGroup);
-            // Posiziona i loghi in basso al centro rispetto allo sguardo della fotocamera
-            socialGroup.setAttribute('position', '0 -0.4 -1.2');
-            socialGroup.setAttribute('rotation', '0 0 0');
-            socialGroup.setAttribute('scale', '0.6 0.6 0.6');
-            isAttachedToCamera = true;
+        targetEl.addEventListener('targetFound', () => {
+          if (!this.isLocked) {
+            this.isLocked = true;
+            this.el.setAttribute('visible', 'true');
+            if (uiText) uiText.innerText = "Tocca un logo per aprire il link!";
           }
         });
+      },
+      tick: function () {
+        // Se il target è stato trovato almeno una volta, forziamo il posizionamento continuo di fronte alla fotocamera
+        if (this.isLocked) {
+          const camera = this.el.sceneEl.camera;
+          if (!camera) return;
 
-        // Gestione del touch universale (iOS/Android)
+          // Assicura visibilità costante sia su Android che iOS
+          this.el.setAttribute('visible', 'true');
+
+          // Ottieni direzione e posizione della fotocamera
+          const cameraObj = camera.el.object3D;
+          const targetPos = new THREE.Vector3();
+          const targetRot = new THREE.Quaternion();
+
+          cameraObj.getWorldPosition(targetPos);
+          cameraObj.getWorldQuaternion(targetRot);
+
+          // Calcola la posizione leggermente in basso rispetto allo sguardo (-0.35 Y, -1 Z)
+          const offset = new THREE.Vector3(0, -0.3, -1);
+          offset.applyQuaternion(targetRot);
+          targetPos.add(offset);
+
+          // Aggiorna posizione e rotazione dei loghi per seguire la fotocamera
+          this.el.object3D.position.copy(targetPos);
+          this.el.object3D.quaternion.copy(targetRot);
+        }
+      }
+    });
+
+    // Gestore per intercettare i tocchi sui loghi in coordinate 2D -> 3D
+    AFRAME.registerComponent('universal-touch', {
+      init: function () {
+        const sceneEl = this.el;
+
         const handleTouch = (e) => {
           const touch = e.touches ? e.touches[0] : e;
+          if (!touch) return;
+
           const mouse = new THREE.Vector2();
-          
           mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
           mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
 
           const camera = sceneEl.camera;
+          if (!camera) return;
+
           const raycaster = new THREE.Raycaster();
           raycaster.setFromCamera(mouse, camera);
 
-          const clickables = Array.from(document.querySelectorAll('.clickable')).map(el => el.object3D);
+          const clickables = Array.from(document.querySelectorAll('.clickable'))
+                                  .map(el => el.object3D)
+                                  .filter(obj => obj && obj.el && obj.el.getAttribute('visible') !== 'false');
+
           const intersects = raycaster.intersectObjects(clickables, true);
 
           if (intersects.length > 0) {
@@ -80,8 +112,8 @@
           }
         };
 
-        window.addEventListener('touchend', handleTouch, false);
-        window.addEventListener('click', handleTouch, false);
+        window.addEventListener('touchend', handleTouch, { passive: false });
+        window.addEventListener('click', handleTouch, { passive: false });
       }
     });
   </script>
@@ -91,8 +123,8 @@
   <div id="ui-container">Inquadra l'immagine per attivare i loghi</div>
 
   <a-scene 
-    sticky-socials
-    mindar-image="imageTargetSrc: ./targets.mind;" 
+    universal-touch
+    mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; missTolerance: 30;" 
     color-space="sRGB" 
     renderer="colorManagement: true, physicallyCorrectLights" 
     vr-mode-ui="enabled: false" 
@@ -107,59 +139,58 @@
 
     <a-camera id="main-camera" position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Contenitore Target AR -->
-    <a-entity id="target-container" mindar-image-target="targetIndex: 0">
+    <!-- Target MindAR -->
+    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+
+    <!-- Contenitore Loghi Indipendente (Insegue la camera ad ogni frame su Android e iOS) -->
+    <a-entity id="social-group" follow-camera visible="false">
       
-      <!-- Gruppo Loghi che seguirà la fotocamera -->
-      <a-entity id="social-group" position="0 0 0.1">
-        
-        <!-- 1. FACEBOOK -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.facebook.com/forpinpiacenza/" 
-          src="#fb-img"
-          position="-0.45 0 0" 
-          width="0.25" 
-          height="0.25" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
+      <!-- 1. FACEBOOK -->
+      <a-plane 
+        class="clickable" 
+        data-url="https://www.facebook.com/forpinpiacenza/" 
+        src="#fb-img"
+        position="-0.36 0 0" 
+        width="0.2" 
+        height="0.2" 
+        material="transparent: true; alphaTest: 0.1">
+      </a-plane>
 
-        <!-- 2. LINKEDIN -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.linkedin.com/company/forpin-scarl/" 
-          src="#in-img"
-          position="-0.15 0 0" 
-          width="0.25" 
-          height="0.25" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
+      <!-- 2. LINKEDIN -->
+      <a-plane 
+        class="clickable" 
+        data-url="https://www.linkedin.com/company/forpin-scarl/" 
+        src="#in-img"
+        position="-0.12 0 0" 
+        width="0.2" 
+        height="0.2" 
+        material="transparent: true; alphaTest: 0.1">
+      </a-plane>
 
-        <!-- 3. INSTAGRAM -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.instagram.com/forpinpiacenza/" 
-          src="#ig-img"
-          position="0.15 0 0" 
-          width="0.25" 
-          height="0.25" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
+      <!-- 3. INSTAGRAM -->
+      <a-plane 
+        class="clickable" 
+        data-url="https://www.instagram.com/forpinpiacenza/" 
+        src="#ig-img"
+        position="0.12 0 0" 
+        width="0.2" 
+        height="0.2" 
+        material="transparent: true; alphaTest: 0.1">
+      </a-plane>
 
-        <!-- 4. YOUTUBE -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.youtube.com/@ForPInScarl" 
-          src="#yt-img"
-          position="0.45 0 0" 
-          width="0.25" 
-          height="0.25" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
-
-      </a-entity>
+      <!-- 4. YOUTUBE -->
+      <a-plane 
+        class="clickable" 
+        data-url="https://www.youtube.com/@ForPInScarl" 
+        src="#yt-img"
+        position="0.36 0 0" 
+        width="0.2" 
+        height="0.2" 
+        material="transparent: true; alphaTest: 0.1">
+      </a-plane>
 
     </a-entity>
+
   </a-scene>
 
 </body>
