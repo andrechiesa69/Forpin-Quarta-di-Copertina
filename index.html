@@ -16,7 +16,7 @@
       -webkit-user-select: none;
     }
 
-    /* Contenitore dei loghi fisso sullo schermo */
+    /* Overlay trasparentissimo fisso in basso */
     #social-overlay {
       position: fixed;
       bottom: 75px;
@@ -24,34 +24,34 @@
       transform: translateX(-50%);
       z-index: 999999 !important;
       display: flex;
-      gap: 6px; /* Molto vicini tra loro */
+      gap: 18px; /* Spaziatura ideale per sovrapporsi ai loghi del catalogo */
       align-items: center;
       justify-content: center;
-      display: none; /* Inizialmente nascosti */
+      display: none;
       pointer-events: auto;
     }
 
-    /* Quando attivato, resta SEMPRE visibile indipendentemente dalla fotocamera */
+    /* Una volta rilevato il target, rimane visibile SEMPRE */
     #social-overlay.is-visible {
       display: flex !important;
     }
 
-    /* Stile icone compatte e ravvicinate */
+    /* Soltanto l'icona trasparente, SENZA sfondo bianco né ombre */
     .social-btn {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
+      width: 38px;
+      height: 38px;
       object-fit: contain;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 5px;
-      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       display: block;
+      filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5)); /* Leggera ombra per contrasto sul fondo scuro */
     }
 
     .social-btn:active {
-      transform: scale(0.92);
+      transform: scale(0.9);
     }
 
     /* Box messaggi in basso */
@@ -81,11 +81,10 @@
         const uiText = document.getElementById('ui-container');
         let activated = false;
 
-        // Quando inquadri il foglio la prima volta
+        // Si attiva al primo riconoscimento e non sparisce più
         sceneEl.addEventListener('targetFound', () => {
           if (!activated) {
             activated = true;
-            // Mostra i loghi e mantienili visibili per sempre
             socialOverlay.classList.add('is-visible');
             if (uiText) uiText.innerText = "Tocca un logo per aprire la pagina!";
           }
@@ -99,7 +98,7 @@
   <!-- Box messaggio informativo -->
   <div id="ui-container">Inquadra l'immagine per attivare i loghi</div>
 
-  <!-- I 4 Loghi fissi vicini tra loro -->
+  <!-- I 4 Loghi completamente trasparenti e distanziati correttamente -->
   <div id="social-overlay">
     <a href="https://www.facebook.com/forpinpiacenza/" target="_blank" rel="noopener">
       <img src="./fb.png" class="social-btn" alt="Facebook">
