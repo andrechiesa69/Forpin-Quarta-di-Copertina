@@ -30,31 +30,50 @@
       pointer-events: none;
       text-align: center;
     }
+
+    /* Overlay 2D per i 30 secondi di persistenza */
+    #persistent-overlay {
+      position: fixed;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9998;
+      display: none;
+      gap: 15px;
+      align-items: center;
+      justify-content: center;
+    }
+    #persistent-overlay.active {
+      display: flex !important;
+    }
+    .social-btn-2d {
+      width: 45px;
+      height: 45px;
+      object-fit: contain;
+      filter: drop-shadow(0px 2px 5px rgba(0,0,0,0.5));
+      cursor: pointer;
+    }
   </style>
 
   <script>
-    AFRAME.registerComponent('touch-handler', {
+    AFRAME.registerComponent('ar-timer-handler', {
       init: function () {
         const sceneEl = this.el;
         const targetEntity = document.querySelector('[mindar-image-target]');
-        const mainCamera = document.getElementById('main-camera');
-        const socialGroup = document.getElementById('social-group');
         const uiText = document.getElementById('ui-container');
+        const overlay2D = document.getElementById('persistent-overlay');
         let hideTimer = null;
 
-        // 1. QUANDO RICONOSCE IL FOGLIO
+        // 1. QUANDO INQUADRI IL FOGLIO
         targetEntity.addEventListener('targetFound', () => {
+          // Annulla eventuale timer di chiusura
           if (hideTimer) {
             clearTimeout(hideTimer);
             hideTimer = null;
           }
-
-          // Riaggancia i loghi al target AR e ripristina la loro posizione originale sul foglio
-          targetEntity.appendChild(socialGroup);
-          socialGroup.setAttribute('position', '0 0 0.1');
-          socialGroup.setAttribute('scale', '1 1 1');
-          socialGroup.setAttribute('visible', 'true');
-
+          // Nasconde l'overlay 2D e mostra i loghi 3D sul foglio
+          overlay2D.classList.remove('active');
+          targetEntity.setAttribute('visible', 'true');
           if (uiText) uiText.innerText = "Tocca direttamente un logo per aprire la pagina";
         });
 
@@ -62,22 +81,17 @@
         targetEntity.addEventListener('targetLost', () => {
           if (hideTimer) clearTimeout(hideTimer);
 
-          // Stacca i loghi dal target e li aggancia alla fotocamera (HUD 3D)
-          mainCamera.appendChild(socialGroup);
-          
-          // Posiziona i loghi in basso al centro nello schermo dell'utente
-          socialGroup.setAttribute('position', '0 -0.3 -1');
-          socialGroup.setAttribute('scale', '0.6 0.6 0.6');
-          socialGroup.setAttribute('visible', 'true');
+          // Mostra l'overlay 2D fisso a schermo
+          overlay2D.classList.add('active');
 
-          // Avvia il timer di 30 secondi in background
+          // Timer invisibile di 30 secondi prima di nasconderli
           hideTimer = setTimeout(() => {
-            socialGroup.setAttribute('visible', 'false');
+            overlay2D.classList.remove('active');
             if (uiText) uiText.innerText = "Inquadra l'immagine per attivare i loghi";
           }, 30000);
         });
 
-        // Gestione del touch sui loghi
+        // Gestione touch per i loghi 3D
         const handleTouch = (e) => {
           const touch = e.touches ? e.touches[0] : e;
           if (!touch) return;
@@ -116,8 +130,16 @@
 
   <div id="ui-container">Inquadra l'immagine per attivare i loghi</div>
 
+  <!-- Overlay Persistente (attivo per 30s dopo aver spostato la fotocamera) -->
+  <div id="persistent-overlay">
+    <a href="https://www.facebook.com/forpinpiacenza/" target="_blank"><img src="./fb.png" class="social-btn-2d"></a>
+    <a href="https://www.linkedin.com/company/forpin-scarl/" target="_blank"><img src="./in.png" class="social-btn-2d"></a>
+    <a href="https://www.instagram.com/forpinpiacenza/" target="_blank"><img src="./ig.png" class="social-btn-2d"></a>
+    <a href="https://www.youtube.com/@ForPInScarl" target="_blank"><img src="./yt.png" class="social-btn-2d"></a>
+  </div>
+
   <a-scene 
-    touch-handler
+    ar-timer-handler
     mindar-image="imageTargetSrc: ./targets.mind; missTolerance: 30;" 
     color-space="sRGB" 
     renderer="colorManagement: true, physicallyCorrectLights" 
@@ -131,60 +153,54 @@
       <img id="yt-img" src="./yt.png">
     </a-assets>
 
-    <!-- Fotocamera principale -->
-    <a-camera id="main-camera" position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
     <!-- Target AR -->
     <a-entity mindar-image-target="targetIndex: 0">
       
-      <!-- Contenitore dei loghi -->
-      <a-entity id="social-group" position="0 0 0.1">
+      <!-- 1. FACEBOOK -->
+      <a-plane 
+        class="clickable" 
+        data-url="https://www.facebook.com/forpinpiacenza/" 
+        src="#fb-img"
+        position="-0.45 0 0.1" 
+        width="0.25" 
+        height="0.25" 
+        material="transparent: true; alphaTest: 0.1">
+      </a-plane>
 
-        <!-- 1. FACEBOOK -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.facebook.com/forpinpiacenza/" 
-          src="#fb-img"
-          position="-0.45 0 0" 
-          width="0.25" 
-          height="0.25" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
+      <!-- 2. LINKEDIN -->
+      <a-plane 
+        class="clickable" 
+        data-url="https://www.linkedin.com/company/forpin-scarl/" 
+        src="#in-img"
+        position="-0.15 0 0.1" 
+        width="0.25" 
+        height="0.25" 
+        material="transparent: true; alphaTest: 0.1">
+      </a-plane>
 
-        <!-- 2. LINKEDIN -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.linkedin.com/company/forpin-scarl/" 
-          src="#in-img"
-          position="-0.15 0 0" 
-          width="0.25" 
-          height="0.25" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
+      <!-- 3. INSTAGRAM -->
+      <a-plane 
+        class="clickable" 
+        data-url="https://www.instagram.com/forpinpiacenza/" 
+        src="#ig-img"
+        position="0.15 0 0.1" 
+        width="0.25" 
+        height="0.25" 
+        material="transparent: true; alphaTest: 0.1">
+      </a-plane>
 
-        <!-- 3. INSTAGRAM -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.instagram.com/forpinpiacenza/" 
-          src="#ig-img"
-          position="0.15 0 0" 
-          width="0.25" 
-          height="0.25" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
-
-        <!-- 4. YOUTUBE -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.youtube.com/@ForPInScarl" 
-          src="#yt-img"
-          position="0.45 0 0" 
-          width="0.25" 
-          height="0.25" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
-
-      </a-entity>
+      <!-- 4. YOUTUBE -->
+      <a-plane 
+        class="clickable" 
+        data-url="https://www.youtube.com/@ForPInScarl" 
+        src="#yt-img"
+        position="0.45 0 0.1" 
+        width="0.25" 
+        height="0.25" 
+        material="transparent: true; alphaTest: 0.1">
+      </a-plane>
 
     </a-entity>
   </a-scene>
