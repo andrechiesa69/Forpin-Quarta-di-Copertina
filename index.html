@@ -17,16 +17,17 @@
     }
     #ui-container {
       position: fixed;
-      bottom: 20px;
+      bottom: 25px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 9999;
       background: rgba(0, 0, 0, 0.85);
       color: #ffffff;
-      padding: 10px 20px;
-      border-radius: 20px;
+      padding: 12px 24px;
+      border-radius: 25px;
       font-family: Arial, sans-serif;
-      font-size: 13px;
+      font-size: 14px;
+      font-weight: bold;
       pointer-events: none;
       text-align: center;
       box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
@@ -34,44 +35,21 @@
   </style>
 
   <script>
-    AFRAME.registerComponent('sticky-ar-socials', {
+    AFRAME.registerComponent('ar-click-handler', {
       init: function () {
         const sceneEl = this.el;
-        const mainCamera = document.getElementById('main-camera');
-        const socialGroup = document.getElementById('social-group');
         const uiText = document.getElementById('ui-container');
-        let isAttached = false;
 
-        // Quando inquadri il target la prima volta
+        // Aggiorna il testo quando il target viene trovato/perso
         sceneEl.addEventListener('targetFound', () => {
-          if (!isAttached) {
-            isAttached = true;
-
-            // Sposta il gruppo di loghi 3D direttamente come figlio della fotocamera
-            mainCamera.appendChild(socialGroup);
-
-            // Posiziona i loghi 3D in basso al centro rispetto agli occhi della fotocamera
-            socialGroup.setAttribute('position', '0 -0.35 -1.2');
-            socialGroup.setAttribute('rotation', '0 0 0');
-            socialGroup.setAttribute('scale', '0.55 0.55 0.55');
-
-            // Perfeziona la visibilità 3D
-            socialGroup.querySelectorAll('a-plane').forEach(plane => {
-              plane.setAttribute('material', 'depthTest: false; transparent: true; alphaTest: 0.1');
-            });
-
-            if (uiText) uiText.innerText = "Tocca un logo per aprire la pagina!";
-          }
+          if (uiText) uiText.innerText = "Tocca un logo per aprire la pagina!";
         });
 
-        // Previene l'invisibilità forzata quando muovi la fotocamera
         sceneEl.addEventListener('targetLost', () => {
-          if (isAttached) {
-            socialGroup.setAttribute('visible', 'true');
-          }
+          if (uiText) uiText.innerText = "Inquadra l'immagine per attivare i loghi";
         });
 
-        // Gestione del touch sui loghi 3D
+        // Gestore del touch sui loghi 3D
         const handleTouch = (e) => {
           const touch = e.touches ? e.touches[0] : e;
           if (!touch) return;
@@ -86,9 +64,7 @@
           const raycaster = new THREE.Raycaster();
           raycaster.setFromCamera(mouse, camera);
 
-          const clickables = Array.from(document.querySelectorAll('.clickable'))
-                                  .map(el => el.object3D);
-
+          const clickables = Array.from(document.querySelectorAll('.clickable')).map(el => el.object3D);
           const intersects = raycaster.intersectObjects(clickables, true);
 
           if (intersects.length > 0) {
@@ -110,12 +86,12 @@
 </head>
 <body>
 
-  <!-- Box messaggio informativo -->
+  <!-- Box informativo in basso -->
   <div id="ui-container">Inquadra l'immagine per attivare i loghi</div>
 
   <a-scene 
-    sticky-ar-socials
-    mindar-image="imageTargetSrc: ./targets.mind;" 
+    ar-click-handler
+    mindar-image="imageTargetSrc: ./targets.mind; missTolerance: 60;" 
     color-space="sRGB" 
     renderer="colorManagement: true, physicallyCorrectLights" 
     vr-mode-ui="enabled: false" 
@@ -128,60 +104,52 @@
       <img id="yt-img" src="./yt.png">
     </a-assets>
 
-    <!-- Fotocamera principale -->
-    <a-camera id="main-camera" position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Target Unico MindAR -->
+    <!-- Target MindAR unico -->
     <a-entity mindar-image-target="targetIndex: 0">
       
-      <!-- Gruppo Loghi 3D nativi (senza sfondi bianchi) -->
-      <a-entity id="social-group" position="0 0 0.1">
-        
-        <!-- 1. FACEBOOK -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.facebook.com/forpinpiacenza/" 
-          src="#fb-img"
-          position="-0.39 0 0" 
-          width="0.22" 
-          height="0.22" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
+      <!-- Contenitore loghi 3D posizionati sopra il foglio -->
+      <!-- Ingranditi leggermente e posizionati alla giusta distanza -->
+      <a-plane 
+        class="clickable" 
+        data-url="https://www.facebook.com/forpinpiacenza/" 
+        src="#fb-img" 
+        position="-0.36 0 0.05" 
+        width="0.2" 
+        height="0.2" 
+        material="transparent: true; alphaTest: 0.1">
+      </a-plane>
 
-        <!-- 2. LINKEDIN -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.linkedin.com/company/forpin-scarl/" 
-          src="#in-img"
-          position="-0.13 0 0" 
-          width="0.22" 
-          height="0.22" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
+      <a-plane 
+        class="clickable" 
+        data-url="https://www.linkedin.com/company/forpin-scarl/" 
+        src="#in-img" 
+        position="-0.12 0 0.05" 
+        width="0.2" 
+        height="0.2" 
+        material="transparent: true; alphaTest: 0.1">
+      </a-plane>
 
-        <!-- 3. INSTAGRAM -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.instagram.com/forpinpiacenza/" 
-          src="#ig-img"
-          position="0.13 0 0" 
-          width="0.22" 
-          height="0.22" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
+      <a-plane 
+        class="clickable" 
+        data-url="https://www.instagram.com/forpinpiacenza/" 
+        src="#ig-img" 
+        position="0.12 0 0.05" 
+        width="0.2" 
+        height="0.2" 
+        material="transparent: true; alphaTest: 0.1">
+      </a-plane>
 
-        <!-- 4. YOUTUBE -->
-        <a-plane 
-          class="clickable" 
-          data-url="https://www.youtube.com/@ForPInScarl" 
-          src="#yt-img"
-          position="0.39 0 0" 
-          width="0.22" 
-          height="0.22" 
-          material="transparent: true; alphaTest: 0.1">
-        </a-plane>
-
-      </a-entity>
+      <a-plane 
+        class="clickable" 
+        data-url="https://www.youtube.com/@ForPInScarl" 
+        src="#yt-img" 
+        position="0.36 0 0.05" 
+        width="0.2" 
+        height="0.2" 
+        material="transparent: true; alphaTest: 0.1">
+      </a-plane>
 
     </a-entity>
   </a-scene>
