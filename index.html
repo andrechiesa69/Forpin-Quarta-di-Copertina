@@ -17,58 +17,53 @@
     }
     #ui-container {
       position: fixed;
-      bottom: 20px;
+      bottom: 25px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 9999;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.85);
       color: #ffffff;
-      padding: 10px 20px;
-      border-radius: 20px;
+      padding: 12px 22px;
+      border-radius: 25px;
       font-family: Arial, sans-serif;
       font-size: 14px;
+      font-weight: bold;
       pointer-events: none;
       text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
   </style>
 
   <script>
-    AFRAME.registerComponent('logic-handler', {
+    AFRAME.registerComponent('ar-logic', {
       init: function () {
         const sceneEl = this.el;
+        const targetEntity = document.querySelector('[mindar-image-target]');
+        const socialGroup = document.getElementById('social-group');
         const uiText = document.getElementById('ui-container');
-        const persistentGroup = document.getElementById('persistent-group');
         let hideTimer = null;
 
-        // Quando MindAR trova l'immagine stampata
-        this.el.addEventListener('targetFound', () => {
+        // Quando MindAR riconosce il target
+        targetEntity.addEventListener('targetFound', () => {
           if (hideTimer) {
             clearTimeout(hideTimer);
             hideTimer = null;
           }
-          // Mostra il gruppo di loghi agganciati alla camera
-          if (persistentGroup) {
-            persistentGroup.setAttribute('visible', 'true');
-          }
-          if (uiText) {
-            uiText.innerText = "Tocca direttamente un logo per aprire la pagina";
-          }
+          // Mostra il gruppo dei loghi
+          if (socialGroup) socialGroup.setAttribute('visible', 'true');
+          if (uiText) uiText.innerText = "Tocca direttamente un logo per aprire la pagina";
         });
 
         // Quando sposti la fotocamera e perdi l'immagine
-        this.el.addEventListener('targetLost', () => {
-          // Non nasconde i loghi subito, ma avvia il timer di 30 secondi
+        targetEntity.addEventListener('targetLost', () => {
+          // NON nascondiamo subito i loghi: partono i 30 secondi di persistenza
           hideTimer = setTimeout(() => {
-            if (persistentGroup) {
-              persistentGroup.setAttribute('visible', 'false');
-            }
-            if (uiText) {
-              uiText.innerText = "Inquadra l'immagine per attivare i loghi";
-            }
+            if (socialGroup) socialGroup.setAttribute('visible', 'false');
+            if (uiText) uiText.innerText = "Inquadra l'immagine per attivare i loghi";
           }, 30000);
         });
 
-        // Gestione del touch/click sui loghi
+        // Raycaster per il tocco sui loghi 3D
         const handleTouch = (e) => {
           const touch = e.touches ? e.touches[0] : e;
           if (!touch) return;
@@ -108,8 +103,8 @@
   <div id="ui-container">Inquadra l'immagine per attivare i loghi</div>
 
   <a-scene 
-    logic-handler
-    mindar-image="imageTargetSrc: ./targets.mind;" 
+    ar-logic
+    mindar-image="imageTargetSrc: ./targets.mind; missTolerance: 60;" 
     color-space="sRGB" 
     renderer="colorManagement: true, physicallyCorrectLights" 
     vr-mode-ui="enabled: false" 
@@ -122,18 +117,22 @@
       <img id="yt-img" src="./yt.png">
     </a-assets>
 
-    <!-- La fotocamera ospita i loghi (HUD 3D): così non crasha mai il tracciamento -->
-    <a-camera position="0 0 0" look-controls="enabled: false">
-      <a-entity id="persistent-group" position="0 -0.25 -1" scale="0.55 0.55 0.55" visible="false">
-        
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <!-- Target AR principale -->
+    <a-entity mindar-image-target="targetIndex: 0">
+      
+      <!-- Contenitore loghi visibile sopra la stampa -->
+      <a-entity id="social-group" position="0 0 0.1" visible="false">
+
         <!-- 1. FACEBOOK -->
         <a-plane 
           class="clickable" 
           data-url="https://www.facebook.com/forpinpiacenza/" 
           src="#fb-img"
-          position="-0.45 0 0" 
-          width="0.25" 
-          height="0.25" 
+          position="-0.36 0 0" 
+          width="0.22" 
+          height="0.22" 
           material="transparent: true; alphaTest: 0.1">
         </a-plane>
 
@@ -142,9 +141,9 @@
           class="clickable" 
           data-url="https://www.linkedin.com/company/forpin-scarl/" 
           src="#in-img"
-          position="-0.15 0 0" 
-          width="0.25" 
-          height="0.25" 
+          position="-0.12 0 0" 
+          width="0.22" 
+          height="0.22" 
           material="transparent: true; alphaTest: 0.1">
         </a-plane>
 
@@ -153,9 +152,9 @@
           class="clickable" 
           data-url="https://www.instagram.com/forpinpiacenza/" 
           src="#ig-img"
-          position="0.15 0 0" 
-          width="0.25" 
-          height="0.25" 
+          position="0.12 0 0" 
+          width="0.22" 
+          height="0.22" 
           material="transparent: true; alphaTest: 0.1">
         </a-plane>
 
@@ -164,18 +163,15 @@
           class="clickable" 
           data-url="https://www.youtube.com/@ForPInScarl" 
           src="#yt-img"
-          position="0.45 0 0" 
-          width="0.25" 
-          height="0.25" 
+          position="0.36 0 0" 
+          width="0.22" 
+          height="0.22" 
           material="transparent: true; alphaTest: 0.1">
         </a-plane>
 
       </a-entity>
-    </a-camera>
 
-    <!-- Target AR (necessario a MindAR per la scansione) -->
-    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
-
+    </a-entity>
   </a-scene>
 
 </body>
