@@ -15,52 +15,12 @@
       user-select: none;
       -webkit-user-select: none;
     }
-
-    /* Overlay trasparentissimo fisso in basso */
-    #social-overlay {
-      position: fixed;
-      bottom: 75px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 999999 !important;
-      display: flex;
-      gap: 18px; /* Spaziatura ideale per sovrapporsi ai loghi del catalogo */
-      align-items: center;
-      justify-content: center;
-      display: none;
-      pointer-events: auto;
-    }
-
-    /* Una volta rilevato il target, rimane visibile SEMPRE */
-    #social-overlay.is-visible {
-      display: flex !important;
-    }
-
-    /* Soltanto l'icona trasparente, SENZA sfondo bianco né ombre */
-    .social-btn {
-      width: 38px;
-      height: 38px;
-      object-fit: contain;
-      background: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      display: block;
-      filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5)); /* Leggera ombra per contrasto sul fondo scuro */
-    }
-
-    .social-btn:active {
-      transform: scale(0.9);
-    }
-
-    /* Box messaggi in basso */
     #ui-container {
       position: fixed;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 999999 !important;
+      z-index: 9999;
       background: rgba(0, 0, 0, 0.85);
       color: #ffffff;
       padding: 10px 20px;
@@ -74,21 +34,76 @@
   </style>
 
   <script>
-    AFRAME.registerComponent('ar-controller', {
+    AFRAME.registerComponent('sticky-ar-socials', {
       init: function () {
         const sceneEl = this.el;
-        const socialOverlay = document.getElementById('social-overlay');
+        const mainCamera = document.getElementById('main-camera');
+        const socialGroup = document.getElementById('social-group');
         const uiText = document.getElementById('ui-container');
-        let activated = false;
+        let isAttached = false;
 
-        // Si attiva al primo riconoscimento e non sparisce più
+        // Quando inquadri il target la prima volta
         sceneEl.addEventListener('targetFound', () => {
-          if (!activated) {
-            activated = true;
-            socialOverlay.classList.add('is-visible');
+          if (!isAttached) {
+            isAttached = true;
+
+            // Sposta il gruppo di loghi 3D direttamente come figlio della fotocamera
+            mainCamera.appendChild(socialGroup);
+
+            // Posiziona i loghi 3D in basso al centro rispetto agli occhi della fotocamera
+            socialGroup.setAttribute('position', '0 -0.35 -1.2');
+            socialGroup.setAttribute('rotation', '0 0 0');
+            socialGroup.setAttribute('scale', '0.55 0.55 0.55');
+
+            // Perfeziona la visibilità 3D
+            socialGroup.querySelectorAll('a-plane').forEach(plane => {
+              plane.setAttribute('material', 'depthTest: false; transparent: true; alphaTest: 0.1');
+            });
+
             if (uiText) uiText.innerText = "Tocca un logo per aprire la pagina!";
           }
         });
+
+        // Previene l'invisibilità forzata quando muovi la fotocamera
+        sceneEl.addEventListener('targetLost', () => {
+          if (isAttached) {
+            socialGroup.setAttribute('visible', 'true');
+          }
+        });
+
+        // Gestione del touch sui loghi 3D
+        const handleTouch = (e) => {
+          const touch = e.touches ? e.touches[0] : e;
+          if (!touch) return;
+
+          const mouse = new THREE.Vector2();
+          mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+          mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+          const camera = sceneEl.camera;
+          if (!camera) return;
+
+          const raycaster = new THREE.Raycaster();
+          raycaster.setFromCamera(mouse, camera);
+
+          const clickables = Array.from(document.querySelectorAll('.clickable'))
+                                  .map(el => el.object3D);
+
+          const intersects = raycaster.intersectObjects(clickables, true);
+
+          if (intersects.length > 0) {
+            let hitEl = intersects[0].object.el;
+            while (hitEl && !hitEl.classList.contains('clickable')) {
+              hitEl = hitEl.parentElement;
+            }
+            if (hitEl && hitEl.dataset.url) {
+              window.location.href = hitEl.dataset.url;
+            }
+          }
+        };
+
+        window.addEventListener('touchend', handleTouch, false);
+        window.addEventListener('click', handleTouch, false);
       }
     });
   </script>
@@ -98,36 +113,77 @@
   <!-- Box messaggio informativo -->
   <div id="ui-container">Inquadra l'immagine per attivare i loghi</div>
 
-  <!-- I 4 Loghi completamente trasparenti e distanziati correttamente -->
-  <div id="social-overlay">
-    <a href="https://www.facebook.com/forpinpiacenza/" target="_blank" rel="noopener">
-      <img src="./fb.png" class="social-btn" alt="Facebook">
-    </a>
-    <a href="https://www.linkedin.com/company/forpin-scarl/" target="_blank" rel="noopener">
-      <img src="./in.png" class="social-btn" alt="LinkedIn">
-    </a>
-    <a href="https://www.instagram.com/forpinpiacenza/" target="_blank" rel="noopener">
-      <img src="./ig.png" class="social-btn" alt="Instagram">
-    </a>
-    <a href="https://www.youtube.com/@ForPInScarl" target="_blank" rel="noopener">
-      <img src="./yt.png" class="social-btn" alt="YouTube">
-    </a>
-  </div>
-
-  <!-- Scena WebAR -->
   <a-scene 
-    ar-controller
+    sticky-ar-socials
     mindar-image="imageTargetSrc: ./targets.mind;" 
     color-space="sRGB" 
     renderer="colorManagement: true, physicallyCorrectLights" 
     vr-mode-ui="enabled: false" 
     device-orientation-permission-ui="enabled: false">
 
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-assets>
+      <img id="fb-img" src="./fb.png">
+      <img id="in-img" src="./in.png">
+      <img id="ig-img" src="./ig.png">
+      <img id="yt-img" src="./yt.png">
+    </a-assets>
 
-    <!-- Target Unico -->
-    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+    <!-- Fotocamera principale -->
+    <a-camera id="main-camera" position="0 0 0" look-controls="enabled: false"></a-camera>
 
+    <!-- Target Unico MindAR -->
+    <a-entity mindar-image-target="targetIndex: 0">
+      
+      <!-- Gruppo Loghi 3D nativi (senza sfondi bianchi) -->
+      <a-entity id="social-group" position="0 0 0.1">
+        
+        <!-- 1. FACEBOOK -->
+        <a-plane 
+          class="clickable" 
+          data-url="https://www.facebook.com/forpinpiacenza/" 
+          src="#fb-img"
+          position="-0.39 0 0" 
+          width="0.22" 
+          height="0.22" 
+          material="transparent: true; alphaTest: 0.1">
+        </a-plane>
+
+        <!-- 2. LINKEDIN -->
+        <a-plane 
+          class="clickable" 
+          data-url="https://www.linkedin.com/company/forpin-scarl/" 
+          src="#in-img"
+          position="-0.13 0 0" 
+          width="0.22" 
+          height="0.22" 
+          material="transparent: true; alphaTest: 0.1">
+        </a-plane>
+
+        <!-- 3. INSTAGRAM -->
+        <a-plane 
+          class="clickable" 
+          data-url="https://www.instagram.com/forpinpiacenza/" 
+          src="#ig-img"
+          position="0.13 0 0" 
+          width="0.22" 
+          height="0.22" 
+          material="transparent: true; alphaTest: 0.1">
+        </a-plane>
+
+        <!-- 4. YOUTUBE -->
+        <a-plane 
+          class="clickable" 
+          data-url="https://www.youtube.com/@ForPInScarl" 
+          src="#yt-img"
+          position="0.39 0 0" 
+          width="0.22" 
+          height="0.22" 
+          material="transparent: true; alphaTest: 0.1">
+        </a-plane>
+
+      </a-entity>
+
+    </a-entity>
   </a-scene>
 
 </body>
