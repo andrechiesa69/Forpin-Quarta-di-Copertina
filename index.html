@@ -4,129 +4,107 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AR Social Links - Forpin Piacenza</title>
-  
+
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      user-select: none;
-      -webkit-user-select: none;
-    }
+    body { margin: 0; overflow: hidden; user-select: none; -webkit-user-select: none; }
+
     #ui-container {
-      position: fixed;
-      bottom: 25px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      background: rgba(0, 0, 0, 0.85);
-      color: #ffffff;
-      padding: 12px 22px;
-      border-radius: 25px;
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-      font-weight: bold;
-      pointer-events: none;
-      text-align: center;
+      position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+      z-index: 9999; background: rgba(0,0,0,0.85); color: #fff;
+      padding: 12px 22px; border-radius: 25px;
+      font-family: Arial, sans-serif; font-size: 14px; font-weight: bold;
+      pointer-events: none; text-align: center; white-space: nowrap;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
+
+    /* Barra loghi fissa sullo schermo: segue sempre la fotocamera */
+    #sticky-logos {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      z-index: 9998; display: none;
+      gap: 14px; padding: 16px 18px;
+      background: rgba(255,255,255,0.92);
+      border-radius: 26px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      opacity: 0; transition: opacity .3s, transform .3s;
+    }
+    #sticky-logos.show { display: flex; }
+    #sticky-logos.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    #sticky-logos a {
+      display: block; width: 18vw; max-width: 90px; height: 18vw; max-height: 90px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #sticky-logos img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
   </style>
 
   <script>
-    AFRAME.registerComponent('ar-persistent-3d', {
+    AFRAME.registerComponent('ar-persistent', {
       init: function () {
         const sceneEl = this.el;
         const targetEntity = document.querySelector('[mindar-image-target]');
         const arLogos = document.getElementById('ar-logos-group');
-        const worldLogos = document.getElementById('world-logos-group');
+        const sticky = document.getElementById('sticky-logos');
         const uiText = document.getElementById('ui-container');
-        
+        const HOLD_MS = 30000; // durata persistenza dopo aver perso il foglio
+
         let hideTimer = null;
+        let fadeTimer = null;
 
-        // 1. QUANDO INQUADRI IL FOGLIO
-        targetEntity.addEventListener('targetFound', () => {
-          if (hideTimer) {
-            clearTimeout(hideTimer);
-            hideTimer = null;
-          }
-          // Mostra i loghi agganciati al foglio in AR e nasconde quelli nello spazio
-          arLogos.setAttribute('visible', 'true');
-          worldLogos.setAttribute('visible', 'false');
-          if (uiText) uiText.innerText = "Tocca direttamente un logo per aprire la pagina";
-        });
-
-        // 2. QUANDO SPOSTI LA FOTOCAMERA E PERDI IL FOGLIO
-        targetEntity.addEventListener('targetLost', () => {
-          // Copiamo la posizione 3D esatta che avevano i loghi AR sul foglio
-          const worldPos = new THREE.Vector3();
-          const worldQuaternion = new THREE.Quaternion();
-          const worldScale = new THREE.Vector3();
-
-          arLogos.object3D.getWorldPosition(worldPos);
-          arLogos.object3D.getWorldQuaternion(worldQuaternion);
-          arLogos.object3D.getWorldScale(worldScale);
-
-          // Applichiamo questa posizione al gruppo slegato da MindAR
-          worldLogos.object3D.position.copy(worldPos);
-          worldLogos.object3D.quaternion.copy(worldQuaternion);
-          worldLogos.object3D.scale.copy(worldScale);
-
-          // Nascondiamo l'AR di MindAR e attiviamo i loghi 3D congelati nello spazio
-          arLogos.setAttribute('visible', 'false');
-          worldLogos.setAttribute('visible', 'true');
-
-          // Avviamo il timer di 30 secondi prima di farli sparire
-          if (hideTimer) clearTimeout(hideTimer);
-          hideTimer = setTimeout(() => {
-            worldLogos.setAttribute('visible', 'false');
-            if (uiText) uiText.innerText = "Inquadra l'immagine per attivare i loghi";
-          }, 30000);
-        });
-
-        // Raycaster touch per consentire il click sui loghi 3D in entrambi gli stati
-        const handleTouch = (e) => {
-          const touch = e.touches ? e.touches[0] : e;
-          if (!touch) return;
-
-          const mouse = new THREE.Vector2();
-          mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
-          mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
-
-          const camera = sceneEl.camera;
-          if (!camera) return;
-
-          const raycaster = new THREE.Raycaster();
-          raycaster.setFromCamera(mouse, camera);
-
-          // Filtriamo solo gli elementi visibili
-          const clickables = Array.from(document.querySelectorAll('.clickable'))
-            .filter(el => {
-              let p = el;
-              while(p && p !== sceneEl) {
-                if (p.getAttribute('visible') === 'false' || p.getAttribute('visible') === false) return false;
-                p = p.parentElement;
-              }
-              return true;
-            })
-            .map(el => el.object3D);
-
-          const intersects = raycaster.intersectObjects(clickables, true);
-
-          if (intersects.length > 0) {
-            let hitEl = intersects[0].object.el;
-            while (hitEl && !hitEl.classList.contains('clickable')) {
-              hitEl = hitEl.parentElement;
-            }
-            if (hitEl && hitEl.dataset.url) {
-              window.location.href = hitEl.dataset.url;
-            }
-          }
+        const showSticky = () => {
+          sticky.classList.add('show');
+          requestAnimationFrame(() => sticky.classList.add('visible'));
+        };
+        const hideSticky = () => {
+          sticky.classList.remove('visible');
+          clearTimeout(fadeTimer);
+          fadeTimer = setTimeout(() => sticky.classList.remove('show'), 300);
         };
 
-        window.addEventListener('touchend', handleTouch, false);
-        window.addEventListener('click', handleTouch, false);
+        // FOGLIO INQUADRATO: loghi in AR sul foglio, barra fissa nascosta
+        targetEntity.addEventListener('targetFound', () => {
+          clearTimeout(hideTimer);
+          hideSticky();
+          arLogos.object3D.visible = true;
+          uiText.innerText = "Tocca un logo per aprire la pagina";
+        });
+
+        // FOGLIO PERSO: i loghi passano sullo schermo per 30 secondi
+        targetEntity.addEventListener('targetLost', () => {
+          showSticky();
+          uiText.innerText = "Tocca un logo (restano 30 secondi)";
+          clearTimeout(hideTimer);
+          hideTimer = setTimeout(() => {
+            hideSticky();
+            uiText.innerText = "Inquadra l'immagine per attivare i loghi";
+          }, HOLD_MS);
+        });
+
+        // Click sui loghi AR (raycaster)
+        sceneEl.addEventListener('loaded', () => {
+          window.addEventListener('click', (e) => {
+            if (e.target.closest && e.target.closest('#sticky-logos')) return;
+            const camera = sceneEl.camera;
+            if (!camera) return;
+
+            const mouse = new THREE.Vector2(
+              (e.clientX / window.innerWidth) * 2 - 1,
+              -(e.clientY / window.innerHeight) * 2 + 1
+            );
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+
+            const objs = Array.from(arLogos.querySelectorAll('.clickable')).map(el => el.object3D);
+            const hits = raycaster.intersectObjects(objs, true);
+            if (hits.length > 0) {
+              let el = hits[0].object.el;
+              while (el && !el.classList.contains('clickable')) el = el.parentElement;
+              if (el && el.dataset.url) window.location.href = el.dataset.url;
+            }
+          });
+        });
       }
     });
   </script>
@@ -135,12 +113,20 @@
 
   <div id="ui-container">Inquadra l'immagine per attivare i loghi</div>
 
-  <a-scene 
-    ar-persistent-3d
-    mindar-image="imageTargetSrc: ./targets.mind; missTolerance: 30;" 
-    color-space="sRGB" 
-    renderer="colorManagement: true, physicallyCorrectLights" 
-    vr-mode-ui="enabled: false" 
+  <!-- Barra loghi fissa sullo schermo (appare quando perdi il foglio) -->
+  <div id="sticky-logos">
+    <a href="https://www.facebook.com/forpinpiacenza/"><img src="./fb.png" alt="Facebook"></a>
+    <a href="https://www.linkedin.com/company/forpin-scarl/"><img src="./in.png" alt="LinkedIn"></a>
+    <a href="https://www.instagram.com/forpinpiacenza/"><img src="./ig.png" alt="Instagram"></a>
+    <a href="https://www.youtube.com/@ForPInScarl"><img src="./yt.png" alt="YouTube"></a>
+  </div>
+
+  <a-scene
+    ar-persistent
+    mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 10; warmupTolerance: 5;"
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights"
+    vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false">
 
     <a-assets>
@@ -152,7 +138,7 @@
 
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- 1. LOGHI ANCORATI AL FOGLIO (Gestiti da MindAR) -->
+    <!-- Loghi AR ancorati al foglio -->
     <a-entity mindar-image-target="targetIndex: 0">
       <a-entity id="ar-logos-group">
         <a-plane class="clickable" data-url="https://www.facebook.com/forpinpiacenza/" src="#fb-img" position="-0.45 0 0.1" width="0.25" height="0.25" material="transparent: true; alphaTest: 0.1"></a-plane>
@@ -160,14 +146,6 @@
         <a-plane class="clickable" data-url="https://www.instagram.com/forpinpiacenza/" src="#ig-img" position="0.15 0 0.1" width="0.25" height="0.25" material="transparent: true; alphaTest: 0.1"></a-plane>
         <a-plane class="clickable" data-url="https://www.youtube.com/@ForPInScarl" src="#yt-img" position="0.45 0 0.1" width="0.25" height="0.25" material="transparent: true; alphaTest: 0.1"></a-plane>
       </a-entity>
-    </a-entity>
-
-    <!-- 2. LOGHI 3D NELLO SPAZIO LIBERO (Si attivano quando sposti la fotocamera) -->
-    <a-entity id="world-logos-group" visible="false">
-      <a-plane class="clickable" data-url="https://www.facebook.com/forpinpiacenza/" src="#fb-img" position="-0.45 0 0.1" width="0.25" height="0.25" material="transparent: true; alphaTest: 0.1"></a-plane>
-      <a-plane class="clickable" data-url="https://www.linkedin.com/company/forpin-scarl/" src="#in-img" position="-0.15 0 0.1" width="0.25" height="0.25" material="transparent: true; alphaTest: 0.1"></a-plane>
-      <a-plane class="clickable" data-url="https://www.instagram.com/forpinpiacenza/" src="#ig-img" position="0.15 0 0.1" width="0.25" height="0.25" material="transparent: true; alphaTest: 0.1"></a-plane>
-      <a-plane class="clickable" data-url="https://www.youtube.com/@ForPInScarl" src="#yt-img" position="0.45 0 0.1" width="0.25" height="0.25" material="transparent: true; alphaTest: 0.1"></a-plane>
     </a-entity>
 
   </a-scene>
